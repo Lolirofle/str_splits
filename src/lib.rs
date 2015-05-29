@@ -90,6 +90,20 @@ fn test_splits(){
 }
 
 #[test]
+fn test_splits_empty(){
+	let mut splits = Splits::from_str("");
+	assert!(splits.next().is_none());
+}
+
+
+#[test]
+fn test_splits_single(){
+	let mut splits = Splits::from_str("a");
+	/*01*/assert_eq!(splits.next().unwrap(),("a",""));
+	/*02*/assert!(splits.next().is_none());
+}
+
+#[test]
 fn test_splits_char(){
 	let mut splits = SplitsChar::from_str("0123456789");
 	/*01*/assert_eq!(splits.next().unwrap(),("",'0',"123456789"));
@@ -103,4 +117,34 @@ fn test_splits_char(){
 	/*09*/assert_eq!(splits.next().unwrap(),("01234567",'8',"9"));
 	/*10*/assert_eq!(splits.next().unwrap(),("012345678",'9',""));
 	/*11*/assert!(splits.next().is_none());
+}
+
+#[test]
+fn test_splits_char_empty(){
+	let mut splits = SplitsChar::from_str("");
+	assert!(splits.next().is_none());
+}
+
+#[test]
+fn test_splits_char_single(){
+	let mut splits = SplitsChar::from_str("a");
+	/*01*/assert_eq!(splits.next().unwrap(),("",'a',""));
+	/*02*/assert!(splits.next().is_none());
+}
+
+#[test]
+fn test_splits_char_two(){
+	let mut splits = SplitsChar::from_str("ab");
+	/*01*/assert_eq!(splits.next().unwrap(),("",'a',"b"));
+	/*02*/assert_eq!(splits.next().unwrap(),("a",'b',""));
+	/*03*/assert!(splits.next().is_none());
+}
+
+#[test]
+fn test_splits_char_three(){
+	let mut splits = SplitsChar::from_str("abc");
+	/*01*/assert_eq!(splits.next().unwrap(),("",'a',"bc"));
+	/*02*/assert_eq!(splits.next().unwrap(),("a",'b',"c"));
+	/*03*/assert_eq!(splits.next().unwrap(),("ab",'c',""));
+	/*04*/assert!(splits.next().is_none());
 }

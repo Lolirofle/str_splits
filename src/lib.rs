@@ -5,7 +5,6 @@ extern crate core;
 use core::iter::Iterator;
 
 pub struct Splits<'l>{
-	str  : &'l str,
 	begin: &'l str,
 	end  : &'l str
 }
@@ -13,8 +12,7 @@ pub struct Splits<'l>{
 impl<'l> Splits<'l>{
 	pub fn from_str(str: &'l str) -> Self{
 		Splits{
-			str  : str,
-			begin: "",
+			begin: unsafe{str.slice_unchecked(0,0)},
 			end  : str
 		}
 	}
@@ -28,8 +26,8 @@ impl<'l> Iterator for Splits<'l>{
 			None
 		}else{
 			let head_len = self.end.char_at(0).len_utf8();
-			self.begin = unsafe{self.str.slice_unchecked(0,self.begin.len() + head_len)};
-			self.end = unsafe{self.end.slice_unchecked(head_len,self.end.len())};
+			self.begin   = unsafe{self.begin.slice_unchecked(0,self.begin.len() + head_len)};
+			self.end     = unsafe{self.end.slice_unchecked(head_len,self.end.len())};
 
 			Some((self.begin,self.end))
 		}
@@ -39,7 +37,6 @@ impl<'l> Iterator for Splits<'l>{
 
 
 pub struct SplitsChar<'l>{
-	str  : &'l str,
 	begin: &'l str,
 	end  : &'l str
 }
@@ -47,9 +44,8 @@ pub struct SplitsChar<'l>{
 impl<'l> SplitsChar<'l>{
 	pub fn from_str(str: &'l str) -> Self{
 		SplitsChar{
-			str  : str,
-			begin: "",
-			end  :  str
+			begin: unsafe{str.slice_unchecked(0,0)},
+			end  : str
 		}
 	}
 }
@@ -64,9 +60,9 @@ impl<'l> Iterator for SplitsChar<'l>{
 			let c = self.end.char_at(0);
 			let c_len = c.len_utf8();
 
-			self.end = unsafe{self.end.slice_unchecked(c_len,self.end.len())};
-			let begin = self.begin;
-			self.begin = unsafe{self.str.slice_unchecked(0,self.begin.len() + c_len)};
+			self.end   = unsafe{self.end.slice_unchecked(c_len,self.end.len())};
+			let begin  = self.begin;
+			self.begin = unsafe{self.begin.slice_unchecked(0,self.begin.len() + c_len)};
 
 			Some((begin,c,self.end))
 		}

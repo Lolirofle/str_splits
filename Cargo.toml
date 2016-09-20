@@ -1,4 +1,4 @@
 [package]
-name = "str_splits"
-version = "0.0.1"
+name = "splits_iter"
+version = "0.1.1"
 authors = ["Lolirofle <lolipopple@hotmail.com>"]

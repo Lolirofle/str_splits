@@ -1,4 +1,11 @@
 [package]
 name = "splits_iter"
-version = "0.1.1"
+version = "1.0.0"
 authors = ["Lolirofle <lolipopple@hotmail.com>"]
+
+description = "Iterator over all 2-splits"
+readme = "README.md"
+license = "MIT"
+keywords = ["iterator", "iter", "split", "splits"]
+
+repository = "https://github.com/Lolirofle/str_splits"

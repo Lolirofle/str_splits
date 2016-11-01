@@ -1,6 +1,6 @@
 splits_iter
 -----------
-Library for the Rust programming language. Provides iterators for all the splits into two slices of a string containing the whole string.
+Library for the Rust programming language. Provides iterators for all 2-splits. A 2-split is an operation that splits one sequence `s` into two so that when they are concatenated creates the original sequence (`split_at(s,_)=(s1,s2)` so that `concat(s1,s2)=s`).
 
 ## Examples
 

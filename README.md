@@ -20,7 +20,7 @@ let mut i = Splits::from_str("0123456789");
 ```
 
 ```rust
-let mut i = SplitsChar::from_str("0123456789");
+let mut i = FocusedSplits::from_str("0123456789");
 /*01*/assert_eq!(i.next(),Some(("",'0',"123456789")));
 /*02*/assert_eq!(i.next(),Some(("0",'1',"23456789")));
 /*03*/assert_eq!(i.next(),Some(("01",'2',"3456789")));

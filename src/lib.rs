@@ -58,21 +58,30 @@ impl<'l,T> Iterator for Splits<&'l [T]>{
 
 
 
-pub struct SplitsChar<'l>{
-	begin: &'l str,
-	end  : &'l str
+pub struct FocusedSplits<Seq>{
+	begin: Seq,
+	end  : Seq
 }
 
-impl<'l> SplitsChar<'l>{
+impl<'l> FocusedSplits<&'l str>{
 	pub fn from_str(str: &'l str) -> Self{
-		SplitsChar{
+		FocusedSplits{
 			begin: unsafe{str.slice_unchecked(0,0)},
 			end  : str
 		}
 	}
 }
 
-impl<'l> Iterator for SplitsChar<'l>{
+impl<'l,T> FocusedSplits<&'l [T]>{
+	pub fn from_slice(slice: &'l [T]) -> Self{
+		FocusedSplits{
+			begin: unsafe{slice::from_raw_parts(slice.as_ptr() , 0)},
+			end  : slice
+		}
+	}
+}
+
+impl<'l> Iterator for FocusedSplits<&'l str>{
 	type Item = (&'l str,char,&'l str);
 
 	fn next(&mut self) -> Option<<Self as Iterator>::Item>{
@@ -84,6 +93,20 @@ impl<'l> Iterator for SplitsChar<'l>{
 			self.begin = unsafe{self.begin.slice_unchecked(0,self.begin.len() + c_len)};
 
 			(begin,c,self.end)
+		})
+	}
+}
+
+impl<'l,T> Iterator for FocusedSplits<&'l [T]>{
+	type Item = (&'l [T],&'l T,&'l [T]);
+
+	fn next(&mut self) -> Option<<Self as Iterator>::Item>{
+		self.end.split_first().map(|(elem,end)|{
+			self.end   = end;
+			let begin = self.begin;
+			self.begin = unsafe{slice::from_raw_parts(self.begin.as_ptr() , self.begin.len()+1)};
+
+			(begin,elem,self.end)
 		})
 	}
 }
@@ -168,8 +191,8 @@ mod test{
 	}
 
 	#[test]
-	fn SplitsChar(){
-		let mut splits = SplitsChar::from_str("0123456789");
+	fn FocusedSplits_str(){
+		let mut splits = FocusedSplits::from_str("0123456789");
 		/*01*/assert_eq!(splits.next(),Some(("",'0',"123456789")));
 		/*02*/assert_eq!(splits.next(),Some(("0",'1',"23456789")));
 		/*03*/assert_eq!(splits.next(),Some(("01",'2',"3456789")));
@@ -184,33 +207,81 @@ mod test{
 	}
 
 	#[test]
-	fn SplitsChar_empty(){
-		let mut splits = SplitsChar::from_str("");
+	fn FocusedSplits_str_empty(){
+		let mut splits = FocusedSplits::from_str("");
 		assert_eq!(splits.next(),None);
 	}
 
 	#[test]
-	fn SplitsChar_single(){
-		let mut splits = SplitsChar::from_str("a");
+	fn FocusedSplits_str_single(){
+		let mut splits = FocusedSplits::from_str("a");
 		/*01*/assert_eq!(splits.next(),Some(("",'a',"")));
 		/*02*/assert_eq!(splits.next(),None);
 	}
 
 	#[test]
-	fn SplitsChar_two(){
-		let mut splits = SplitsChar::from_str("ab");
+	fn FocusedSplits_str_two(){
+		let mut splits = FocusedSplits::from_str("ab");
 		/*01*/assert_eq!(splits.next(),Some(("",'a',"b")));
 		/*02*/assert_eq!(splits.next(),Some(("a",'b',"")));
 		/*03*/assert_eq!(splits.next(),None);
 	}
 
 	#[test]
-	fn SplitsChar_three(){
-		let mut splits = SplitsChar::from_str("abc");
+	fn FocusedSplits_str_three(){
+		let mut splits = FocusedSplits::from_str("abc");
 		/*01*/assert_eq!(splits.next(),Some(("",'a',"bc")));
 		/*02*/assert_eq!(splits.next(),Some(("a",'b',"c")));
 		/*03*/assert_eq!(splits.next(),Some(("ab",'c',"")));
 		/*04*/assert_eq!(splits.next(),None);
 	}
 
+	#[test]
+	fn FocusedSplits_slice(){
+		let mut splits = FocusedSplits::from_str("0123456789");
+		/*01*/assert_eq!(splits.next(),Some(("",'0',"123456789")));
+		/*02*/assert_eq!(splits.next(),Some(("0",'1',"23456789")));
+		/*03*/assert_eq!(splits.next(),Some(("01",'2',"3456789")));
+		/*04*/assert_eq!(splits.next(),Some(("012",'3',"456789")));
+		/*05*/assert_eq!(splits.next(),Some(("0123",'4',"56789")));
+		/*06*/assert_eq!(splits.next(),Some(("01234",'5',"6789")));
+		/*07*/assert_eq!(splits.next(),Some(("012345",'6',"789")));
+		/*08*/assert_eq!(splits.next(),Some(("0123456",'7',"89")));
+		/*09*/assert_eq!(splits.next(),Some(("01234567",'8',"9")));
+		/*10*/assert_eq!(splits.next(),Some(("012345678",'9',"")));
+		/*11*/assert_eq!(splits.next(),None);
+	}
+
+	#[test]
+	fn FocusedSplits_slice_empty(){
+		let mut splits = FocusedSplits::from_slice(&[] as &[u8]);
+		assert_eq!(splits.next(),None);
+	}
+
+	#[test]
+	fn FocusedSplits_slice_single(){
+		let slice = [1u8];
+		let mut splits = FocusedSplits::from_slice(&slice as &[u8]);
+		/*01*/assert_eq!(splits.next(),Some((&[] as &[_],&1,&[] as &[_])));
+		/*02*/assert_eq!(splits.next(),None);
+	}
+
+	#[test]
+	fn FocusedSplits_slice_two(){
+		let slice = [1u8,2];
+		let mut splits = FocusedSplits::from_slice(&slice as &[u8]);
+		/*01*/assert_eq!(splits.next(),Some((&[] as &[_],&1,&[2u8] as &[_])));
+		/*02*/assert_eq!(splits.next(),Some((&[1u8] as &[_],&2,&[] as &[_])));
+		/*03*/assert_eq!(splits.next(),None);
+	}
+
+	#[test]
+	fn FocusedSplits_slice_three(){
+		let slice = [1u8,2,3];
+		let mut splits = FocusedSplits::from_slice(&slice as &[u8]);
+		/*01*/assert_eq!(splits.next(),Some((&[] as &[_],&1,&[2,3u8] as &[_])));
+		/*02*/assert_eq!(splits.next(),Some((&[1u8] as &[_],&2,&[3u8] as &[_])));
+		/*03*/assert_eq!(splits.next(),Some((&[1,2u8] as &[_],&3,&[] as &[_])));
+		/*04*/assert_eq!(splits.next(),None);
+	}
 }
